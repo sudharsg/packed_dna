@@ -18,6 +18,7 @@
 // be sure to exit with informative error messages if the input is invalid
 
 use structopt::StructOpt;
+use dna::PackedDna;
 
 /// Count the number of occurrences of each nucleotide in the provided DNA.
 #[derive(Debug, StructOpt)]
@@ -31,6 +32,8 @@ struct Opts {
 
 fn main() {
     let opts = Opts::from_args();
-    let dna = opts.dna;
-    println!("Input: {}", &dna);
+    let dna1 = opts.dna;
+    println!("Input: {}", &dna1);
+    let pd = PackedDna::new(String::from(&dna1));
+    pd.iterate();
 }
