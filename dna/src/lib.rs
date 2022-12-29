@@ -3,6 +3,8 @@
 #![warn(missing_docs)]
 
 use std::{convert::TryFrom, fmt::Display, str::FromStr};
+use std::iter::FromIterator;
+
 
 // TODO: add a packed module with the PackedDna struct
 //
@@ -15,62 +17,171 @@ use std::{convert::TryFrom, fmt::Display, str::FromStr};
 // Make sure to unit test and document all elements
 // Also, the internal representation of the PackedDna struct should be privately scoped
 
-pub fn bits_char_convert(value: u8) -> char {
-    match value {
-        0u8 => 'A',
-        1u8 => 'C',
-        2u8 => 'G',
-        3u8 => 'T',
-        _ => 'X',
-    }
-}
+// pub fn bits_char_convert(value: u8) -> char {
+//     match value {
+//         0u8 => 'A',
+//         1u8 => 'C',
+//         2u8 => 'G',
+//         3u8 => 'T',
+//         _ => 'X',
+//     }
+// }
 
-pub fn char_bits_convert(value: char) -> u8 {
-    match value.to_ascii_uppercase() {
-        'A' => 0u8,
-        'C' => 1u8,
-        'G' => 2u8,
-        'T' => 3u8,
-        _ => 8u8,
-    }
-}
+// pub fn char_bits_convert(value: char) -> u8 {
+//     match value.to_ascii_uppercase() {
+//         'A' => 0u8,
+//         'C' => 1u8,
+//         'G' => 2u8,
+//         'T' => 3u8,
+//         _ => 8u8,
+//     }
+// }
+
+// pub fn enum_bits_convert(value: Nuc) -> u8 {
+//     match value {
+//         Nuc::A => 0u8,
+//         Nuc::C => 1u8,
+//         Nuc::G => 2u8,
+//         Nuc::T => 3u8,
+//         // _ => 8u8,
+//     }
+// }
+
+// pub fn bits_enum_convert(value: u8) -> Nuc {
+//     match value {
+//         0u8 => Nuc::A,
+//         1u8 => Nuc::C,
+//         2u8 => Nuc::G,
+//         3u8 => Nuc::T,
+//         _ => Nuc::T,
+//     }
+// }
+
+
+// pub struct PackedDna )
+//    // dna_data: String, 
+//     // encode_data: u64, 
+//     // en_size: u8
+//     Vec<u8>
+//     // encode_idx: u8
+// );
+
+
+// impl PackedDna {
+//     // pub fn get(&self, idx:usize) -> Nuc {
+//     //     let val = ((self.encode_data >> (idx*2)) & (3u64)) as u8;
+//     //     let c = bits_char_convert(val);
+//     //     return Nuc::c;
+//     // }
+//     pub fn new(dna_data: String) -> PackedDna {
+//         let mut en_size = 0u8;
+//         let mut encode_data = 0u64;
+//         for c in dna_data.chars(){
+//             let val = char_bits_convert(c);
+//             if val != 8u8 {
+//                 encode_data = (encode_data << 2) | (val as u64);
+//                 en_size += 1;
+//             }
+//         }
+//         PackedDna {encode_data, en_size}
+//     }
+//     // pub fn iterate(&self) {
+//     //     let (mut a, mut c, mut g, mut t) = (0,0,0,0);
+//     //     for i in 0..self.en_size {
+//     //         let val = (self.encode_data >> (i*2)) & (3u64);
+//     //         if val == 0  { 
+//     //             a+= 1; 
+//     //         } else if val == 1 {
+//     //             c+=1;
+//     //         } else if val == 2 { 
+//     //             g+=1;
+//     //         } else if val == 3 { 
+//     //             t+=1;
+//     //         }
+//     //     }
+//     //     println!("A: {}", a);
+//     //     println!("C: {}", c);
+//     //     println!("G: {}", g);
+//     //     println!("T: {}", t);
+//     //     let f = Nuc::from_str("C").unwrap();
+//     //     // let e = Nuc::try_from('N').unwrap();
+//     //     println!("DEBUG - {:?}", enum_bits_convert(f));
+//     //     // f.what_is_this();
+//     //     // e.what_is_this();
+//     // }
+    
+// }
 
 #[derive(Debug)]
-pub struct PackedDna {
-   // dna_data: String, 
-    encode_data: u64, 
-    en_size: u8
-}
+pub struct PackedDna(Vec<u8>);
 
 impl PackedDna {
-    // pub fn get(&self, idx:usize) -> Nuc {
-    //     let val = ((self.encode_data >> (idx*2)) & (3u64)) as u8;
-    //     let c = bits_char_convert(val);
-    //     return Nuc::c;
-    // }
-    pub fn new(dna_data: String) -> PackedDna {
-        let mut en_size = 0u8;
-        let mut encode_data = 0u64;
-        for c in dna_data.chars(){
-            let val = char_bits_convert(c);
-            if val != 8u8 {
-                encode_data = (encode_data << 2) | (val as u64);
-                en_size += 1;
-            }
-        }
-        PackedDna {encode_data, en_size}
+    fn new() -> PackedDna {
+        PackedDna(Vec::new())
     }
-    pub fn iterate(&self) {
+
+    fn add(&mut self, elem: u8) {
+        self.0.push(elem);
+    }
+
+    fn get(&self, idx:usize) -> Nuc {
+        return PackedDna::bits_enum_convert(self.0[idx]);
+    }
+
+    fn bits_char_convert(value: u8) -> char {
+        match value {
+            0u8 => 'A',
+            1u8 => 'C',
+            2u8 => 'G',
+            3u8 => 'T',
+            _ => 'X',
+        }
+    }
+
+    fn char_bits_convert(value: char) -> u8 {
+        match value.to_ascii_uppercase() {
+            'A' => 0u8,
+            'C' => 1u8,
+            'G' => 2u8,
+            'T' => 3u8,
+            _ => 8u8,
+        }
+    }
+
+    fn enum_bits_convert(value: Nuc) -> u8 {
+        match value {
+            Nuc::A => 0u8,
+            Nuc::C => 1u8,
+            Nuc::G => 2u8,
+            Nuc::T => 3u8,
+            // _ => 8u8,
+        }
+    }
+
+    fn bits_enum_convert(value: u8) -> Nuc {
+        match value {
+            0u8 => Nuc::A,
+            1u8 => Nuc::C,
+            2u8 => Nuc::G,
+            3u8 => Nuc::T,
+            _ => Nuc::T,
+        }
+    }
+
+    pub fn print_data(&self) {
         let (mut a, mut c, mut g, mut t) = (0,0,0,0);
-        for i in 0..self.en_size {
-            let val = (self.encode_data >> (i*2)) & (3u64);
-            if val == 0  { 
+        for i_index in 0..self.0.len(){
+            let val = self.get(i_index); 
+            // println!("{:?}",t );
+            // t.what_is_this();
+            // let data = bits_char_convert(self.get(i_index));
+            if val == Nuc::A  { 
                 a+= 1; 
-            } else if val == 1 {
+            } else if val == Nuc::C  {
                 c+=1;
-            } else if val == 2 { 
+            } else if val == Nuc::G  { 
                 g+=1;
-            } else if val == 3 { 
+            } else if val == Nuc::T { 
                 t+=1;
             }
         }
@@ -79,18 +190,35 @@ impl PackedDna {
         println!("G: {}", g);
         println!("T: {}", t);
     }
-    
+
 }
 
-// impl FromIterator for PackedDna{
-//     type Item = char;
-//     fn next(&mut self) -> Option<char> {
-//         let data = match self.decoded_rep {
-//             'A' => self.dna.A,
+impl FromIterator<Nuc> for PackedDna {
+    fn from_iter<I: IntoIterator<Item=Nuc>>(iter: I) -> Self {
+        let mut arr = PackedDna::new();
+        for nuc_data in iter {
+            arr.add(PackedDna::enum_bits_convert(nuc_data));
+        }
+        arr
+    }
+}
 
-//         }
-//     }
-// }
+impl FromStr for PackedDna {
+    type Err = ParseNucError<String>;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let dna_data = s.to_ascii_uppercase();
+        let mut arr = PackedDna::new();
+        for c in dna_data.chars(){
+            let val = PackedDna::char_bits_convert(c);
+            if val != 8u8 {
+                // encode_data = (encode_data << 2) | (val as u64);
+                // en_size += 1;
+                arr.add(val);
+            }
+        }
+        Ok(arr)
+    }
+}
 
 /// A nucleotide
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

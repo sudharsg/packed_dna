@@ -19,6 +19,9 @@
 
 use structopt::StructOpt;
 use dna::PackedDna;
+use dna::Nuc;
+use std::iter::FromIterator;
+use std::str::FromStr;
 
 /// Count the number of occurrences of each nucleotide in the provided DNA.
 #[derive(Debug, StructOpt)]
@@ -34,6 +37,14 @@ fn main() {
     let opts = Opts::from_args();
     let dna1 = opts.dna;
     println!("Input: {}", &dna1);
-    let pd = PackedDna::new(String::from(&dna1));
-    pd.iterate();
+    let nu_data = vec![Nuc::C, Nuc::A, Nuc::T];
+    let c = PackedDna::from_iter(nu_data);
+    // print!("{:?}", c);
+    c.print_data();
+    let d = PackedDna::from_str(&dna1);
+    // d.what_is_this();
+    // println!("{:?}", d);
+    d.expect("REASON").print_data();
+    // let pd = PackedDna::new(String::from(&dna1));
+    // pd.iterate();
 }
