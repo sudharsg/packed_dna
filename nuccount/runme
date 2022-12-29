@@ -1,1 +1,1 @@
-cargo run -- --dna ACGTT
+cargo run -- --dna ACGTTT
