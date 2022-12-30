@@ -38,9 +38,10 @@ fn main() {
     let dna1 = opts.dna;
     println!("Input: {}", &dna1);
     let nu_data = vec![Nuc::A, Nuc::C, Nuc::G, Nuc::T, Nuc::T, Nuc::T];
-    // let c = PackedDna::from_iter(nu_data);
+    // let nu_data = vec![];
+    let c = PackedDna::from_iter(nu_data);
     // println!("{:?}", c);
-    // c.print_data();
+    c.print_data();
     let d = PackedDna::from_str(&dna1);
     // d.what_is_this();
     // println!("{:?}", d);

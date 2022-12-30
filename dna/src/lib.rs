@@ -2,9 +2,9 @@
 
 #![warn(missing_docs)]
 
-use std::{convert::TryFrom, fmt::Display, str::FromStr};
-use std::iter::FromIterator;
-
+use std::{convert::TryFrom, fmt::Display, str::FromStr, iter::FromIterator, process};
+// use std::iter::FromIterator;
+// use std::
 
 // TODO: add a packed module with the PackedDna struct
 //
@@ -19,29 +19,21 @@ use std::iter::FromIterator;
 
 
 #[derive(Debug)]
-pub struct PackedDna(Vec<u8>);
+pub struct PackedDna(Vec<u32>);
 
 impl PackedDna {
     fn new() -> PackedDna {
         PackedDna(Vec::new())
     }
 
-    fn add(&mut self, elem: u8) {
+    fn add(&mut self, elem: u32) {
         self.0.push(elem);
     }
 
     fn get(&self, idx:usize) -> Nuc {
-        return PackedDna::bits_enum_convert(self.0[idx]);
-    }
-
-    fn bits_char_convert(value: u8) -> char {
-        match value {
-            0u8 => 'A',
-            1u8 => 'C',
-            2u8 => 'G',
-            3u8 => 'T',
-            _ => 'X',
-        }
+        let data = self.0[(idx+16)/16];
+        let item = ((data >> ((idx%16)*2)) & (3u32)) as u8;
+        return PackedDna::bits_enum_convert(item);
     }
 
     fn char_bits_convert(value: char) -> u8 {
@@ -60,7 +52,6 @@ impl PackedDna {
             Nuc::C => 1u8,
             Nuc::G => 2u8,
             Nuc::T => 3u8,
-            // _ => 8u8,
         }
     }
 
@@ -77,22 +68,21 @@ impl PackedDna {
     pub fn print_data(&self) {
         let (mut a, mut c, mut g, mut t) = (0,0,0,0);
         let data_size = self.0[0];
-        let mut data = 0u8;
-        // println!("data_size -- {:?}", data_size);
+        if data_size == 0 {
+            print!("Input DNA sequence is empty; ");
+            println!("Please enter a valid sequence using {{A,C,G,T}}");
+            process::exit(1);   
+        }
         for inx in 0..data_size{
             let i_index = inx as usize;
-            if i_index%4 == 0 {
-                data = self.0[(i_index+4)/4];
-            }
-            let item = (data >> ((i_index%4)*2)) & (3u8);
-            let val = PackedDna::bits_char_convert(item);
-            if val == 'A' { 
+            let val = self.get(i_index);
+            if val == Nuc::A { 
                 a+= 1; 
-            } else if val == 'C'  {
+            } else if val == Nuc::C  {
                 c+=1;
-            } else if val == 'G'  { 
+            } else if val == Nuc::G  { 
                 g+=1;
-            } else if val == 'T' { 
+            } else if val == Nuc::T { 
                 t+=1;
             }
         }
@@ -107,25 +97,22 @@ impl PackedDna {
 impl FromIterator<Nuc> for PackedDna {
     fn from_iter<I: IntoIterator<Item=Nuc>>(iter: I) -> Self {
         let mut arr = PackedDna::new();
-        let mut size = 0u8;
-        let mut local_itr = 0u8;
-        let mut local_data = 0u8;
+        let mut size = 0u32;
+        let mut local_data = 0u32;
+        arr.add(0u32); // size of the data
         for nuc_data in iter {
             let val = PackedDna::enum_bits_convert(nuc_data);
-            if local_itr == 4u8{
+            if (size%16u32 == 0) && (size != 0u32){
                 arr.add(local_data);
-                local_itr = 0u8;
-                local_data = 0u8;
+                local_data = 0u32;
             }
-            local_data = (local_data << 2) | (val as u8);
-            local_itr += 1;
-            // arr.add();
+            local_data = (local_data << 2) | (val as u32);
             size += 1;
         }
-        if local_itr != 0u8 {
+        if size%16u32 != 0u32 {
             arr.add(local_data);
         }
-        arr.0.insert(0,size);
+        arr.0[0] = size;
         arr
     }
 }
@@ -135,27 +122,27 @@ impl FromStr for PackedDna {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let dna_data = s.to_ascii_uppercase();
         let mut arr = PackedDna::new();
-        let mut size = 0u8;
-        let mut local_itr = 0u8;
-        let mut local_data = 0u8;
+        let mut size = 0u32;
+        let mut local_data = 0u32;
+        arr.add(0u32); // size of the data
         for c in dna_data.chars(){
+            // input validity check
+            if let Err(_parse_nuc_err) = Nuc::try_from(c){
+                println!("Invalid Input - {:?} ; Please correct and rerun", c);
+                process::exit(1);
+            }
             let val = PackedDna::char_bits_convert(c);
-            if val == 8u8 {
-                continue;
-            }
-            if local_itr == 4u8{
+            if (size%16u32 == 0) && (size != 0u32){
                 arr.add(local_data);
-                local_itr = 0u8;
-                local_data = 0u8;
+                local_data = 0u32;
             }
-            local_data = (local_data << 2) | (val as u8);
-            local_itr += 1;
+            local_data = (local_data << 2) | (val as u32);
             size +=1;
         }
-        if local_itr != 0u8 {
+        if size%16u32 != 0u32 {
             arr.add(local_data);
         }
-        arr.0.insert(0,size);
+        arr.0[0] = size;
         Ok(arr)
     }
 }
