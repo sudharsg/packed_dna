@@ -3,8 +3,7 @@
 #![warn(missing_docs)]
 
 use std::{convert::TryFrom, fmt::Display, str::FromStr, iter::FromIterator, process};
-// use std::iter::FromIterator;
-// use std::
+
 
 // TODO: add a packed module with the PackedDna struct
 //
@@ -18,21 +17,21 @@ use std::{convert::TryFrom, fmt::Display, str::FromStr, iter::FromIterator, proc
 // Also, the internal representation of the PackedDna struct should be privately scoped
 
 
-#[derive(Debug)]
-pub struct PackedDna(Vec<u32>);
+#[derive(Debug, PartialEq)]
+pub struct PackedDna(Vec<u8>);
 
 impl PackedDna {
     fn new() -> PackedDna {
         PackedDna(Vec::new())
     }
 
-    fn add(&mut self, elem: u32) {
+    fn add(&mut self, elem: u8) {
         self.0.push(elem);
     }
 
     fn get(&self, idx:usize) -> Nuc {
-        let data = self.0[(idx+16)/16];
-        let item = ((data >> ((idx%16)*2)) & (3u32)) as u8;
+        let data = self.0[(idx+4)/4];
+        let item = (data >> ((idx%4)*2)) & (3u8);
         return PackedDna::bits_enum_convert(item);
     }
 
@@ -68,9 +67,9 @@ impl PackedDna {
     pub fn print_data(&self) {
         let (mut a, mut c, mut g, mut t) = (0,0,0,0);
         let data_size = self.0[0];
-        if data_size == 0 {
+        if data_size == 0u8 {
             print!("Input DNA sequence is empty; ");
-            print!("Please enter a valid sequence using {{A,C,G,T}}");
+            println!("Please enter a valid sequence using {{A,C,G,T}}");
             process::exit(1);   
         }
         for inx in 0..data_size{
@@ -97,22 +96,29 @@ impl PackedDna {
 impl FromIterator<Nuc> for PackedDna {
     fn from_iter<I: IntoIterator<Item=Nuc>>(iter: I) -> Self {
         let mut arr = PackedDna::new();
-        let mut size = 0u32;
-        let mut local_data = 0u32;
-        arr.add(0u32); // size of the data
+        let mut size = 0u8;
+        let mut local_data = 0u8;
+        arr.add(0u8); // size of the data
         for nuc_data in iter {
             let val = PackedDna::enum_bits_convert(nuc_data);
-            if (size%16u32 == 0) && (size != 0u32){
+            if (size%4u8 == 0u8) && (size != 0u8){
                 arr.add(local_data);
-                local_data = 0u32;
+                local_data = 0u8;
             }
-            local_data = (local_data << 2) | (val as u32);
+            local_data = (local_data << 2) | (val as u8);
+            if size == 255 {
+                println!("Overflow Error: Pass a DNA sequence of size less than 256");
+                process::exit(1);
+            }
             size += 1;
         }
-        if size%16u32 != 0u32 {
+        if size%4u8 != 0u8 {
             arr.add(local_data);
         }
         arr.0[0] = size;
+        if size == 0 {
+            arr = PackedDna::new();
+        }
         arr
     }
 }
@@ -122,27 +128,39 @@ impl FromStr for PackedDna {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let dna_data = s.to_ascii_uppercase();
         let mut arr = PackedDna::new();
-        let mut size = 0u32;
-        let mut local_data = 0u32;
-        arr.add(0u32); // size of the data
+        let mut size = 0u8;
+        let mut local_data = 0u8;
+        let mut err_data = Vec::new();
+        arr.add(0u8); // size of the data
         for c in dna_data.chars(){
             // input validity check
             if let Err(_parse_nuc_err) = Nuc::try_from(c){
-                println!("Invalid Input - {:?} ; Please correct and rerun", c);
-                process::exit(1);
+                err_data.push(c);
             }
             let val = PackedDna::char_bits_convert(c);
-            if (size%16u32 == 0) && (size != 0u32){
+            if (size%4u8 == 0u8) && (size != 0u8){
                 arr.add(local_data);
-                local_data = 0u32;
+                local_data = 0u8;
             }
-            local_data = (local_data << 2) | (val as u32);
+            local_data = (local_data << 2) | (val as u8);
+            if size == 255 {
+                println!("Overflow Error: Pass a DNA sequence of size less than 256");
+                process::exit(1);
+            }
             size +=1;
         }
-        if size%16u32 != 0u32 {
+        if size%4u8 != 0u8 {
             arr.add(local_data);
         }
         arr.0[0] = size;
+        // error handling
+        if err_data.len() != 0 {
+            println!("Invalid chars in input {:?}.\nPlease remove and rerun using only {{A,C,G,T}}",err_data);
+            process::exit(1);
+        }
+        if size == 0 {
+            arr = PackedDna::new();
+        }
         Ok(arr)
     }
 }
@@ -197,14 +215,43 @@ impl FromStr for Nuc {
 #[cfg(test)]
 mod tests {
     // TODO: fill in tests
+    use super::*;
+    #[test]
+    fn test_dna_from_iter() {
+        assert_eq!(PackedDna::from_iter(vec![Nuc::A, Nuc::C, Nuc::G, Nuc::T, Nuc::T, Nuc::T, Nuc::G])
+            ,PackedDna(vec![7,0b00011011,0b111110]));
+        assert_eq!(PackedDna::from_iter(vec![Nuc::A,Nuc::G,Nuc::C,Nuc::T,Nuc::G,Nuc::C,Nuc::T,Nuc::A,
+            Nuc::G,Nuc::C,Nuc::T,Nuc::G,Nuc::A,Nuc::T,Nuc::C,Nuc::G,Nuc::A,Nuc::C])
+            ,PackedDna(vec![18,0b00100111,0b10011100,0b10011110,0b00110110,0b0001]));
+        assert_eq!(PackedDna::from_iter(vec![]), PackedDna(vec![]));
+    }
+
+    #[test]
+    fn test_dna_from_str() {
+        let res = PackedDna::from_str("ACGTTT").unwrap();
+        assert_eq!(res,PackedDna(vec![6,0b00011011,0b1111]));
+        let res2 = PackedDna::from_str("AGCTGCTAGCTGATCGAAGTCAAAAAgggggtgAattttttttttttttttttttttgatgatcgtgacgtagtcgtacttagcta").unwrap();
+        assert_eq!(res2
+            ,PackedDna(vec![86,0b00100111,0b10011100,0b10011110,0b00110110,0b00001011,0b01000000,
+                0b00001010,0b10101011,0b10000011,0b11111111,0b11111111,0b11111111,0b11111111,
+                0b11111111,0b11100011,0b10001101,0b10111000,0b01101100,0b10110110,0b11000111,0b11001001,0b1100]));
+        let res3 = PackedDna::from_str("").unwrap();
+        assert_eq!(res3,PackedDna(vec![]));
+    }
 
     #[test]
     fn tryfrom_char() {
-        assert!(false);
+        assert_eq!(Nuc::try_from('C').unwrap(), Nuc::C);
+        assert_eq!(Nuc::try_from('A').unwrap(), Nuc::A);
+        assert_eq!(Nuc::try_from('G').unwrap(), Nuc::G);
+        assert_eq!(Nuc::try_from('T').unwrap(), Nuc::T);
     }
 
     #[test]
     fn fromstr() {
-        assert!(false);
+        assert_eq!(Nuc::from_str("C").unwrap(), Nuc::C);
+        assert_eq!(Nuc::from_str("A").unwrap(), Nuc::A);
+        assert_eq!(Nuc::from_str("G").unwrap(), Nuc::G);
+        assert_eq!(Nuc::from_str("T").unwrap(), Nuc::T);
     }
 }
