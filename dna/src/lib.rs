@@ -70,7 +70,7 @@ impl PackedDna {
         let data_size = self.0[0];
         if data_size == 0 {
             print!("Input DNA sequence is empty; ");
-            println!("Please enter a valid sequence using {{A,C,G,T}}");
+            print!("Please enter a valid sequence using {{A,C,G,T}}");
             process::exit(1);   
         }
         for inx in 0..data_size{
