@@ -2,8 +2,7 @@
 
 #![allow(missing_docs)]
 
-use std::{convert::TryFrom, fmt::Display, str::FromStr, iter::FromIterator, process};
-
+use std::{convert::TryFrom, fmt::Display, iter::FromIterator, process, str::FromStr};
 
 // TODO: add a packed module with the PackedDna struct
 //
@@ -16,12 +15,11 @@ use std::{convert::TryFrom, fmt::Display, str::FromStr, iter::FromIterator, proc
 // Make sure to unit test and document all elements
 // Also, the internal representation of the PackedDna struct should be privately scoped
 
-
 // This struct stores the input DNA sequence in memory efficient format
 // data - sequence of nucleotide stored in memory efficient format
 // data_len - number of nucleotides stored
 #[derive(Debug, PartialEq)]
-pub struct PackedDna{
+pub struct PackedDna {
     data: Vec<u8>,
     data_len: u32,
 }
@@ -29,28 +27,30 @@ pub struct PackedDna{
 impl PackedDna {
     // This function creates a new instance of PackedDna and
     // returns the created struct instance to the caller function
-    fn new(data:Vec<u8>, data_len:u32) -> PackedDna {
-        PackedDna {data, data_len}
+    fn new(data: Vec<u8>, data_len: u32) -> PackedDna {
+        PackedDna { data, data_len }
     }
 
     // This function acts as a getter function for the stored nucleotide.
     // Given the index number, the stored nucleotide is returned to the user
     // Return value - Nucleotide present in the queried index
-    fn get(&self, idx:usize) -> Nuc {
+    fn get(&self, idx: usize) -> Nuc {
         // Bound checking to ensure the queried index is valid
         if idx as u32 > self.data_len {
-            println!("Error: The Provided index exceeds the total data size {:?}", 
-                self.data_len);
+            println!(
+                "Error: The Provided index exceeds the total data size {:?}",
+                self.data_len
+            );
             process::exit(1);
         }
-        let data = self.data[(idx)/4];
-        let item = (data >> ((idx%4)*2)) & (3u8);
-        return PackedDna::bits_enum_convert(item);
+        let data = self.data[(idx) / 4];
+        let item = (data >> ((idx % 4) * 2)) & (3u8);
+        PackedDna::bits_enum_convert(item)
     }
 
     // This function converts the passed in char to a integer value
-    // when an invalid char is passed, 8 is returned indicating that 
-    // the passed in char value is invalid. 
+    // when an invalid char is passed, 8 is returned indicating that
+    // the passed in char value is invalid.
     fn char_bits_convert(value: char) -> u8 {
         match value.to_ascii_uppercase() {
             'A' => 0u8,
@@ -71,7 +71,7 @@ impl PackedDna {
         }
     }
 
-    // This functions converts the passed in integer value to a 
+    // This functions converts the passed in integer value to a
     // corresponding enum. When an invalid integer is passed,
     // Nuc::T is returned. However, the calls to this function are vetted
     // and will always have a valid integer passed in.
@@ -86,29 +86,29 @@ impl PackedDna {
     }
 
     // This functions prints the frequency of each stored nucleotide in the
-    // passed in DNA sequence. 
+    // passed in DNA sequence.
     pub fn print_data(&self) {
-        let (mut a, mut c, mut g, mut t) = (0,0,0,0);
-        // Checking if an empty sequence was stored and 
+        let (mut a, mut c, mut g, mut t) = (0, 0, 0, 0);
+        // Checking if an empty sequence was stored and
         // exits accordingly
         if self.data_len == 0u32 {
             print!("Error: Input DNA sequence is empty; ");
             println!("Please enter a valid sequence using {{A,C,G,T}}");
-            process::exit(1);   
+            process::exit(1);
         }
         // this loop counts the frequency of each nucleotide in the
         // stored sequence
-        for inx in 0..self.data_len{
+        for inx in 0..self.data_len {
             let i_index = inx as usize;
             let val = self.get(i_index);
-            if val == Nuc::A { 
-                a+= 1; 
-            } else if val == Nuc::C  {
-                c+=1;
-            } else if val == Nuc::G  { 
-                g+=1;
-            } else if val == Nuc::T { 
-                t+=1;
+            if val == Nuc::A {
+                a += 1;
+            } else if val == Nuc::C {
+                c += 1;
+            } else if val == Nuc::G {
+                g += 1;
+            } else if val == Nuc::T {
+                t += 1;
             }
         }
         println!("A: {}", a);
@@ -116,31 +116,30 @@ impl PackedDna {
         println!("G: {}", g);
         println!("T: {}", t);
     }
-
 }
 
 // This iterator function is used to iterate over the vector of Nucs
 // and store them in the PackedDNA struct in a memory efficient manner
 // Returns PackedDNA struct instance created using given input (vector of Nuc)
 impl FromIterator<Nuc> for PackedDna {
-    fn from_iter<I: IntoIterator<Item=Nuc>>(iter: I) -> Self {
+    fn from_iter<I: IntoIterator<Item = Nuc>>(iter: I) -> Self {
         let mut arr = Vec::<u8>::new();
         let mut size = 0u32;
         let mut local_data = 0u8;
         // this loops over the vector of nucs for storage
         for nuc_data in iter {
             let val = PackedDna::enum_bits_convert(nuc_data);
-            if ((size%4u32) as u8 == 0u8) && (size != 0u32){
+            if ((size % 4u32) as u8 == 0u8) && (size != 0u32) {
                 arr.push(local_data);
                 local_data = 0u8;
             }
-            // since only 2 bit is used for storing, and the storage is 
+            // since only 2 bit is used for storing, and the storage is
             // a vector<u8>, 4 nucleotides can be stored in one vector index
-            local_data = (local_data << 2) | (val as u8);
+            local_data = (local_data << 2) | val;
             size += 1;
         }
         // any remaining data is stored in the vector in new index
-        if size%4u32 != 0u32 {
+        if size % 4u32 != 0u32 {
             arr.push(local_data);
         }
         PackedDna::new(arr, size)
@@ -158,30 +157,33 @@ impl FromStr for PackedDna {
         let mut size = 0u32;
         let mut local_data = 0u8;
         let mut err_data = Vec::new();
-        for c in dna_data.chars(){
+        for c in dna_data.chars() {
             // checking if a valid nucleotide is present
-            if let Err(_parse_nuc_err) = Nuc::try_from(c){
+            if let Err(_parse_nuc_err) = Nuc::try_from(c) {
                 err_data.push(c);
             }
             let val = PackedDna::char_bits_convert(c);
-            if ((size%4u32) as u8 == 0u8) && (size != 0u32){
+            if ((size % 4u32) as u8 == 0u8) && (size != 0u32) {
                 arr.push(local_data);
                 local_data = 0u8;
             }
-            // since only 2 bit is used for storing, and the storage is 
+            // since only 2 bit is used for storing, and the storage is
             // a vector<u8>, 4 nucleotides can be stored in one vector index
-            local_data = (local_data << 2) | (val as u8);
-            size +=1;
+            local_data = (local_data << 2) | val;
+            size += 1;
         }
         // any remaining data is stored in the vector in new index
-        if size%4u32 != 0u32 {
+        if size % 4u32 != 0u32 {
             arr.push(local_data);
         }
         // error handling - printing out all invalid chars present in input
         // string, and exits the program safely.
-        if err_data.len() != 0 {
-            println!("Error: Invalid chars in input {:?}.\nPlease remove and 
-                rerun using only {{A,C,G,T}}",err_data);
+        if !err_data.is_empty() {
+            println!(
+                "Error: Invalid chars in input {:?}.\nPlease remove and 
+                rerun using only {{A,C,G,T}}",
+                err_data
+            );
             process::exit(1);
         }
         Ok(PackedDna::new(arr, size))
@@ -245,15 +247,48 @@ mod tests {
     #[test]
     fn test_dna_from_iter() {
         // Normal input
-        assert_eq!(PackedDna::from_iter(vec![Nuc::A, Nuc::C, Nuc::G, Nuc::T, Nuc::T,
-            Nuc::T, Nuc::G]),PackedDna{data:vec![0b00011011,0b111110],data_len:7});
+        assert_eq!(
+            PackedDna::from_iter(vec![Nuc::A, Nuc::C, Nuc::G, Nuc::T, Nuc::T, Nuc::T, Nuc::G]),
+            PackedDna {
+                data: vec![0b00011011, 0b111110],
+                data_len: 7
+            }
+        );
         // Huge input
-        assert_eq!(PackedDna::from_iter(vec![Nuc::A,Nuc::G,Nuc::C,Nuc::T,Nuc::G,
-            Nuc::C,Nuc::T,Nuc::A,Nuc::G,Nuc::C,Nuc::T,Nuc::G,Nuc::A,Nuc::T,Nuc::C,
-            Nuc::G,Nuc::A,Nuc::C]),PackedDna{data:vec![0b00100111,0b10011100,
-            0b10011110,0b00110110,0b0001],data_len:18});
+        assert_eq!(
+            PackedDna::from_iter(vec![
+                Nuc::A,
+                Nuc::G,
+                Nuc::C,
+                Nuc::T,
+                Nuc::G,
+                Nuc::C,
+                Nuc::T,
+                Nuc::A,
+                Nuc::G,
+                Nuc::C,
+                Nuc::T,
+                Nuc::G,
+                Nuc::A,
+                Nuc::T,
+                Nuc::C,
+                Nuc::G,
+                Nuc::A,
+                Nuc::C
+            ]),
+            PackedDna {
+                data: vec![0b00100111, 0b10011100, 0b10011110, 0b00110110, 0b0001],
+                data_len: 18
+            }
+        );
         // Empty input
-        assert_eq!(PackedDna::from_iter(vec![]), PackedDna{data:vec![],data_len:0});
+        assert_eq!(
+            PackedDna::from_iter(vec![]),
+            PackedDna {
+                data: vec![],
+                data_len: 0
+            }
+        );
     }
 
     // Test to check whether FromStr function works properly for
@@ -262,20 +297,39 @@ mod tests {
     fn test_dna_from_str() {
         // Normal Input
         let res = PackedDna::from_str("ACGTTT").unwrap();
-        assert_eq!(res,PackedDna{data:vec![0b00011011,0b1111],data_len:6});
+        assert_eq!(
+            res,
+            PackedDna {
+                data: vec![0b00011011, 0b1111],
+                data_len: 6
+            }
+        );
         // Huge Input
         let res2 = PackedDna::from_str("AGCTGCTAGCTGATCGAAGTCAAAAAgggggtgAattttttttttttttttttttttgatgatcgtgacgtagtcgtacttagcta").unwrap();
-        assert_eq!(res2
-            ,PackedDna{data:vec![0b00100111,0b10011100,0b10011110,0b00110110,
-            0b00001011,0b01000000,0b00001010,0b10101011,0b10000011,0b11111111,
-            0b11111111,0b11111111,0b11111111,0b11111111,0b11100011,0b10001101,
-            0b10111000,0b01101100,0b10110110,0b11000111,0b11001001,0b1100],data_len:86});
+        assert_eq!(
+            res2,
+            PackedDna {
+                data: vec![
+                    0b00100111, 0b10011100, 0b10011110, 0b00110110, 0b00001011, 0b01000000,
+                    0b00001010, 0b10101011, 0b10000011, 0b11111111, 0b11111111, 0b11111111,
+                    0b11111111, 0b11111111, 0b11100011, 0b10001101, 0b10111000, 0b01101100,
+                    0b10110110, 0b11000111, 0b11001001, 0b1100
+                ],
+                data_len: 86
+            }
+        );
         // Empty Input
         let res3 = PackedDna::from_str("").unwrap();
-        assert_eq!(res3, PackedDna{data:vec![],data_len:0});
+        assert_eq!(
+            res3,
+            PackedDna {
+                data: vec![],
+                data_len: 0
+            }
+        );
     }
 
-    // Test to check if the characters are interpretted properly by the 
+    // Test to check if the characters are interpretted properly by the
     // Nucleotide function
     #[test]
     fn tryfrom_char() {
@@ -285,7 +339,7 @@ mod tests {
         assert_eq!(Nuc::try_from('T').unwrap(), Nuc::T);
     }
 
-    // Test to check if the characters are interpretted properly by the 
+    // Test to check if the characters are interpretted properly by the
     // Nucleotide function
     #[test]
     fn fromstr() {

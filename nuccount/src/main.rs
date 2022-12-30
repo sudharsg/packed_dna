@@ -17,14 +17,13 @@
 //
 // be sure to exit with informative error messages if the input is invalid
 
-use structopt::StructOpt;
 use dna::PackedDna;
 use std::str::FromStr;
+use structopt::StructOpt;
 // These need to be imported if need to use from_iter construct function
 // of PackedDNA struct
 // use dna::Nuc;
 // use std::iter::FromIterator;
-
 
 /// Count the number of occurrences of each nucleotide in the provided DNA.
 #[derive(Debug, StructOpt)]
@@ -33,7 +32,7 @@ struct Opts {
     ///
     /// It is case insensitive but only nucleotides A, C, G and T are supported.
     #[structopt(short = "d", long, required = true)]
-    dna: String
+    dna: String,
 }
 
 fn main() {
@@ -45,5 +44,4 @@ fn main() {
     // c.print_data();
     let d = PackedDna::from_str(&dna1);
     d.expect("REASON").print_data();
-    
 }
