@@ -29,6 +29,10 @@ impl PackedDna {
     }
 
     fn get(&self, idx:usize) -> Nuc {
+        if idx as u32 > self.data_len {
+            println!("Error: The Provided index exceeds the total data size {:?}", self.data_len);
+            process::exit(1);
+        }
         let data = self.data[(idx)/4];
         let item = (data >> ((idx%4)*2)) & (3u8);
         return PackedDna::bits_enum_convert(item);
@@ -67,7 +71,7 @@ impl PackedDna {
         let (mut a, mut c, mut g, mut t) = (0,0,0,0);
         let data_size = self.data_len;
         if data_size == 0u32 {
-            print!("Input DNA sequence is empty; ");
+            print!("Error: Input DNA sequence is empty; ");
             println!("Please enter a valid sequence using {{A,C,G,T}}");
             process::exit(1);   
         }
@@ -139,7 +143,7 @@ impl FromStr for PackedDna {
         }
         // error handling
         if err_data.len() != 0 {
-            println!("Invalid chars in input {:?}.\nPlease remove and rerun using only {{A,C,G,T}}",err_data);
+            println!("Error: Invalid chars in input {:?}.\nPlease remove and rerun using only {{A,C,G,T}}",err_data);
             process::exit(1);
         }
         Ok(PackedDna::new(arr, size))
