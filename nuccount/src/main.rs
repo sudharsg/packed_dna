@@ -40,8 +40,12 @@ fn main() {
     let dna1 = opts.dna;
     println!("Input: {}", &dna1);
     // let nu_data = vec![Nuc::A, Nuc::C, Nuc::G, Nuc::T, Nuc::T, Nuc::T, Nuc::G];
-    // let c = PackedDna::from_iter(nu_data);
+    // let c = PackedDna::from_iter(vec![]);
     // c.print_data();
+
+    // calling the from str constructor from DNA crate to build the
+    // PackedDNA struct based on input strings
     let d = PackedDna::from_str(&dna1);
+    // prints the frequencies of the nucleotides present in the input string
     d.expect("REASON").print_data();
 }

@@ -1,6 +1,6 @@
 //! A general-purpose genomics crate for dealing with DNA.
 
-#![allow(missing_docs)]
+#![warn(missing_docs)]
 
 use std::{convert::TryFrom, fmt::Display, iter::FromIterator, process, str::FromStr};
 
@@ -15,25 +15,30 @@ use std::{convert::TryFrom, fmt::Display, iter::FromIterator, process, str::From
 // Make sure to unit test and document all elements
 // Also, the internal representation of the PackedDna struct should be privately scoped
 
-// This struct stores the input DNA sequence in memory efficient format
-// data - sequence of nucleotide stored in memory efficient format
-// data_len - number of nucleotides stored
+/// A DNA struct - stores the sequence of nucleotide in a
+/// memory efficient format
 #[derive(Debug, PartialEq)]
 pub struct PackedDna {
+    // sequence of nucleotide stored in memory efficient format
     data: Vec<u8>,
+    // number of nucleotides stored
     data_len: u32,
+    // Note: These data structures' size can be changed depends on the
+    // usage of the program. For instance, if the maximum DNA length is
+    // less than 256, we can make data_len as u8. Such similar memory
+    // optimizations can be done for "data" as well.
 }
 
 impl PackedDna {
-    // This function creates a new instance of PackedDna and
-    // returns the created struct instance to the caller function
+    /// This function creates a new instance of PackedDna and
+    /// returns the created struct instance to the caller function
     fn new(data: Vec<u8>, data_len: u32) -> PackedDna {
         PackedDna { data, data_len }
     }
 
-    // This function acts as a getter function for the stored nucleotide.
-    // Given the index number, the stored nucleotide is returned to the user
-    // Return value - Nucleotide present in the queried index
+    /// This function acts as a getter function for the stored nucleotide.
+    /// Given the index number, the stored nucleotide is returned to the user
+    /// Return value - Nucleotide present in the queried index
     fn get(&self, idx: usize) -> Nuc {
         // Bound checking to ensure the queried index is valid
         if idx as u32 > self.data_len {
@@ -48,9 +53,9 @@ impl PackedDna {
         PackedDna::bits_enum_convert(item)
     }
 
-    // This function converts the passed in char to a integer value
-    // when an invalid char is passed, 8 is returned indicating that
-    // the passed in char value is invalid.
+    /// This function converts the passed in char to a integer value
+    /// when an invalid char is passed, 8 is returned indicating that
+    /// the passed in char value is invalid.
     fn char_bits_convert(value: char) -> u8 {
         match value.to_ascii_uppercase() {
             'A' => 0u8,
@@ -61,7 +66,7 @@ impl PackedDna {
         }
     }
 
-    // This function converts the passed in enum to a integer value.
+    /// This function converts the passed in enum to a integer value.
     fn enum_bits_convert(value: Nuc) -> u8 {
         match value {
             Nuc::A => 0u8,
@@ -71,10 +76,10 @@ impl PackedDna {
         }
     }
 
-    // This functions converts the passed in integer value to a
-    // corresponding enum. When an invalid integer is passed,
-    // Nuc::T is returned. However, the calls to this function are vetted
-    // and will always have a valid integer passed in.
+    /// This functions converts the passed in integer value to a
+    /// corresponding enum. When an invalid integer is passed,
+    /// Nuc::T is returned. However, the calls to this function are vetted
+    /// and will always have a valid integer passed in.
     fn bits_enum_convert(value: u8) -> Nuc {
         match value {
             0u8 => Nuc::A,
@@ -85,8 +90,8 @@ impl PackedDna {
         }
     }
 
-    // This functions prints the frequency of each stored nucleotide in the
-    // passed in DNA sequence.
+    /// This functions prints the frequency of each stored nucleotide in the
+    /// passed in DNA sequence.
     pub fn print_data(&self) {
         let (mut a, mut c, mut g, mut t) = (0, 0, 0, 0);
         // Checking if an empty sequence was stored and
@@ -118,9 +123,9 @@ impl PackedDna {
     }
 }
 
-// This iterator function is used to iterate over the vector of Nucs
-// and store them in the PackedDNA struct in a memory efficient manner
-// Returns PackedDNA struct instance created using given input (vector of Nuc)
+/// This iterator function is used to iterate over the vector of Nucs
+/// and store them in the PackedDNA struct in a memory efficient manner
+/// Returns PackedDNA struct instance created using given input (vector of Nuc)
 impl FromIterator<Nuc> for PackedDna {
     fn from_iter<I: IntoIterator<Item = Nuc>>(iter: I) -> Self {
         let mut arr = Vec::<u8>::new();
@@ -142,13 +147,19 @@ impl FromIterator<Nuc> for PackedDna {
         if size % 4u32 != 0u32 {
             arr.push(local_data);
         }
+        // empty input provided
+        if size == 0u32 {
+            print!("Error: Input DNA sequence is empty; ");
+            println!("Please enter a valid sequence using {{A,C,G,T}}");
+            // process::exit(1);
+        }
         PackedDna::new(arr, size)
     }
 }
 
-// This function is used to iterate over the DNA string containing nucleotides
-// and store them in the PackedDNA struct in a memory efficient manner
-// Returns PackedDNA struct instance created using given input string
+/// This function is used to iterate over the DNA string containing nucleotides
+/// and store them in the PackedDNA struct in a memory efficient manner
+/// Returns PackedDNA struct instance created using given input string
 impl FromStr for PackedDna {
     type Err = ParseNucError<String>;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -185,6 +196,12 @@ impl FromStr for PackedDna {
                 err_data
             );
             process::exit(1);
+        }
+        // empty input provided
+        if size == 0u32 {
+            print!("Error: Input DNA sequence is empty; ");
+            println!("Please enter a valid sequence using {{A,C,G,T}}");
+            // process::exit(1);
         }
         Ok(PackedDna::new(arr, size))
     }
